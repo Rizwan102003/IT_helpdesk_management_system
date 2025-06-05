@@ -11,9 +11,14 @@ $generatedPassword = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employee_id = trim($_POST["employee_id"]);
+    $employee_name = trim($_POST["employee_name"]);
+    $dept = trim($_POST["dept"]);
+    $designation = trim($_POST["designation"]);
+    $email = trim($_POST["email"]);
+    $contact = trim($_POST["contact"]);
     
 
-    $check = $conn->prepare("SELECT * FROM employees WHERE employee_id = ?");
+    $check = $conn->prepare("SELECT * FROM users WHERE employee_id = ?");
     $check->bind_param("s", $employee_id);
     $check->execute();
     $result = $check->get_result();
@@ -25,9 +30,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $generatedPassword = substr(str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"), 0, 8);
         $hashedPassword = password_hash($generatedPassword, PASSWORD_DEFAULT);
 
-
-        $stmt = $conn->prepare("INSERT INTO employees (employee_id, password) VALUES (?, ?)");
-        $stmt->bind_param("ss", $employee_id, $hashedPassword);
+        $stmt = $conn->prepare("INSERT INTO users (employee_id,
+        employee_name,
+        dept,
+        designation,
+        email,
+        contact,
+        password) 
+        VALUES (?,?,?,?,?,?,?)");
+        $stmt->bind_param("sssssss", $employee_id,$employee_name, $dept, $designation, $email, $contact, $hashedPassword);
         $stmt->execute();
     }
 }
@@ -37,13 +48,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html>
 <head>
     <title>Register - Helpdesk</title>
-    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="../styles/register.css">
 </head>
 <body>
     <div class="container">
         <h2>Register</h2>
         <form method="POST" action="">
             <input type="text" name="employee_id" placeholder="Enter Employee ID" required>
+            <input type="text" name="employee_name" placeholder="Enter Employee Name" required>
+            <input type="text" name="dept" placeholder="Enter Employee Dept" required>
+            <input type="text" name="designation" placeholder="Enter Employee designation" required>
+            <input type="text" name="email" placeholder="Enter Employee email-id" required>
+            <input type="text" name="contact" placeholder="Enter Employee Contact Number" required>
             <br><br>
             <button type="submit" class="btn">Register</button>
         </form>

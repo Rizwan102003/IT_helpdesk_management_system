@@ -10,7 +10,8 @@
 <body>
   <div class="container">
     <img src="images/railways.png" alt="Eastern Railways Logo" class="logo">
-    <h1>Welcome to Eastern Railways Helpdesk Management System</h1>
+    <h1>Welcome to Eastern Railways IT Centre Helpdesk <br>
+      Complaint Registration System</h1>
     <div class="buttons">
       <a href="pages/login.php" class="btn">Login</a>
       <a href="pages/register.php" class="btn">Register</a>

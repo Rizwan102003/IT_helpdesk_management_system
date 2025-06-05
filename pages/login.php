@@ -13,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employee_id = trim($_POST["employee_id"]);
     $password = $_POST["password"];
 
-    $stmt = $conn->prepare("SELECT * FROM employees WHERE employee_id = ?");
+    $stmt = $conn->prepare("SELECT * FROM users WHERE employee_id = ?");
     $stmt->bind_param("s", $employee_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -21,7 +21,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($row = $result->fetch_assoc()) {
         if (password_verify($password, $row['password'])) {
             $_SESSION["employee_id"] = $employee_id;
-            header("Location: profile.php");
+            if ($row["employee_type"] === "admin") {
+                header("Location: /admin_home.php");
+            } elseif ($row["employee_type"] === "senior") {
+                header("Location: /senior_home.php");
+            } else {
+                header("Location: /employee_home.php");
+            }
             exit();
         } else {
             $error = "Invalid password.";
@@ -36,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html>
 <head>
     <title>Login - Helpdesk</title>
-    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="../styles/login.css">
 </head>
 <body>
     <div class="container">
