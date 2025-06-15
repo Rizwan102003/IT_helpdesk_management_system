@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 $conn = new mysqli("localhost", "root", "", "helpdesk");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -21,12 +20,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($row = $result->fetch_assoc()) {
         if (password_verify($password, $row['password'])) {
             $_SESSION["employee_id"] = $employee_id;
-            if ($row["employee_type"] === "admin") {
-                header("Location: /admin_home.php");
-            } elseif ($row["employee_type"] === "senior") {
-                header("Location: /senior_home.php");
+            if ($row["level"] === "L1") {
+                header("Location: /helpdesk/pages/admin_home.php");
+            } elseif ($row["level"] === "L2") {
+                header("Location: /helpdesk/pages/senior_home.php");
             } else {
-                header("Location: /employee_home.php");
+                header("Location: /helpdesk/pages/employee_home.php");
             }
             exit();
         } else {
