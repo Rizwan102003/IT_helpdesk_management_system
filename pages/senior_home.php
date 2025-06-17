@@ -12,23 +12,28 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch Senior Name
-$sql_user = "SELECT employee_name FROM users WHERE employee_id = '$employee_id'";
-$res_user = $conn->query($sql_user);
-$employee_name = "";
-if ($res_user && $res_user->num_rows > 0) {
-    $employee_name = $res_user->fetch_assoc()['employee_name'];
+if (isset($_GET['section']) && $_GET['section'] === 'logout') {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit();
 }
 
-// Fetch complaints for Reports (all complaints)
-$sql_all_complaints = "SELECT * FROM complaint ORDER BY date DESC";
+$sql_user = "SELECT employee_id, employee_name, dept, section, designation FROM users WHERE employee_id = '$employee_id'";
+$res_user = $conn->query($sql_user);
+$employee_data = null;
+$employee_name = "";
+if ($res_user && $res_user->num_rows > 0) {
+    $employee_data = $res_user->fetch_assoc();
+    $employee_name = $employee_data['employee_name'];
+}
+
+$sql_all_complaints = "SELECT * FROM complaint WHERE senior_officer = '$employee_id' ORDER BY date DESC";
 $res_all = $conn->query($sql_all_complaints);
 
-// Fetch complaints submitted by this senior (View Status)
 $sql_my_complaints = "SELECT * FROM complaint WHERE employee_id = '$employee_id' ORDER BY date DESC";
 $res_my = $conn->query($sql_my_complaints);
 
-// Handle complaint update (Edit from modal form)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
     $cid = $conn->real_escape_string($_POST['complaint_id']);
     $status = $conn->real_escape_string($_POST['status']);
@@ -44,7 +49,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,9 +57,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
     <style>
         body {font-family: Arial; margin:0; padding:0; background: #f4f4f4;}
         .navbar {background:#007bff; color:white; padding:15px; font-size:22px;}
-        .sidebar {width:200px; background:#333; height:100vh; position:fixed; top:0; left:0; color:white;}
+        .sidebar {width:200px; background:#77bbf2; height:100vh; position:fixed; top:0; left:0; color:white;}
         .sidebar a {display:block; color:white; padding:15px; text-decoration:none;}
-        .sidebar a:hover {background:#575757;}
+        .sidebar a:hover {background:#213cb0;}
         .content {margin-left:200px; padding:20px;}
         table {width:100%; border-collapse: collapse;}
         th, td {border:1px solid #ccc; padding:8px; text-align:left;}
@@ -66,44 +70,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 <body>
 
 <div class="navbar">
+    &nbsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
     Welcome, <?= htmlspecialchars($employee_name) ?> (Senior Officer)
 </div>
 
 <div class="sidebar">
-    <a href="?section=register">Register Complaint</a>
+    <a href="complaint.php">Register Complaint</a>
     <a href="?section=status">View Status</a>
     <a href="?section=reports">Reports</a>
+    <a href="?section=profile">Profile</a>
+    <a href="?section=logout">Logout</a>
 </div>
 
 <div class="content">
-
 <?php
-// Section rendering
-$section = isset($_GET['section']) ? $_GET['section'] : 'register';
+$section = isset($_GET['section']) ? $_GET['section'] : 'status';
 
-if ($section == 'register') {
-    // Simple complaint register form
-?>
-    <h2>Register New Complaint</h2>
-    <form method="POST" action="senior_register_complaint.php">
-        <label>Type:</label>
-        <select name="type" required>
-            <option value="software">Software</option>
-            <option value="hardware">Hardware</option>
-            <option value="network">Network</option>
-        </select><br><br>
-
-        <label>Description:</label><br>
-        <textarea name="description" required></textarea><br><br>
-
-        <button type="submit" class="btn">Submit</button>
-    </form>
-
-<?php
-} elseif ($section == 'status') {
+if ($section == 'status') {
 ?>
     <h2>My Registered Complaints</h2>
-    <table>
+    <table> 
         <tr><th>Type</th><th>Description</th><th>Status</th><th>Date</th></tr>
         <?php while($row = $res_my->fetch_assoc()) { ?>
             <tr>
@@ -129,7 +115,7 @@ if ($section == 'register') {
                 <td><?= htmlspecialchars(substr($row['description'],0,30)) ?>...</td>
                 <td><?= $row['status'] ?></td>
                 <td><?= $row['date'] ?></td>
-                <td>
+                <td> 
                     <form method="POST" action="senior_view_complaint.php" style="display:inline;">
                         <input type="hidden" name="complaint_id" value="<?= $row['complaint_id'] ?>">
                         <button type="submit" class="btn">View</button>
@@ -139,9 +125,20 @@ if ($section == 'register') {
         <?php } ?>
     </table>
 
+<?php
+} elseif ($section == 'profile') {
+?>
+    <h2>My Profile</h2>
+    <table>
+        <tr><th>Employee ID</th><td><?= htmlspecialchars($employee_data['employee_id']) ?></td></tr>
+        <tr><th>Name</th><td><?= htmlspecialchars($employee_data['employee_name']) ?></td></tr>
+        <tr><th>Department</th><td><?= htmlspecialchars($employee_data['dept']) ?></td></tr>
+        <tr><th>Section</th><td><?= htmlspecialchars($employee_data['section']) ?></td></tr>
+        <tr><th>Designation</th><td><?= htmlspecialchars($employee_data['designation']) ?></td></tr>
+    </table>
+    <br>
+    <a href="change_password.php"><button class="btn">Change Password</button></a>
 <?php } ?>
-
 </div>
-
 </body>
 </html>

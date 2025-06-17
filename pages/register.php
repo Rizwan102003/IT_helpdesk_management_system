@@ -19,6 +19,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if($designation=="afa"){
         $level="L2";
     }
+    elseif($designation== "se/it"){
+        $level= "L1";
+    }
     else {
         $level="L3";
     }
@@ -76,6 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label for="dept">Choose a dept:</label>
                 <select name="dept" id="dept" >
                 <option value="ee">Electrical</option>
+                <option value="it">IT</option>
                 <option value="commercial">Commercial</option>
                 <option value="traffic">Traffic</option>
                 <option value="accounts">Accounts</option>
@@ -85,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label for="section">Choose a section:</label>
                 <select id="section" name="section">
                 <option value="admin">Admin</option>
+                <option value="it">IT</option>
                 <option value="budget">Budget</option>
                 <option value="establishment">Establishment</option>
                 </select>
@@ -95,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="afa">AFA</option>
                 <option value="aa">AA</option>
                 <option value="jaa">JAA</option>
-                <option value="se">SE</option>
+                <option value="se/it">SE/IT</option>
                 <option value="cos">COS</option>
                 </select>
             <input type="text" name="email" placeholder="Enter Employee email-id" required>
