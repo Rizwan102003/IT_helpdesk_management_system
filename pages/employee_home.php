@@ -28,11 +28,14 @@ if ($res_user && $res_user->num_rows > 0) {
     $employee_name = $employee_data['employee_name'];
 }
 
-$sql_all_complaints = "SELECT * FROM complaint ORDER BY date DESC";
-$res_all = $conn->query($sql_all_complaints);
+//$sql_all_complaints = "SELECT * FROM complaint ORDER BY date DESC";
+//$res_all = $conn->query($sql_all_complaints);
 
 $sql_my_complaints = "SELECT * FROM complaint WHERE employee_id = '$employee_id' ORDER BY date DESC";
 $res_my = $conn->query($sql_my_complaints);
+
+$sql_inbox = "SELECT * FROM complaint WHERE employee_id = '$employee_id' AND senior_officer = '$employee_id' ORDER BY date DESC";
+$res_inbox = $conn->query($sql_inbox);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
     $cid = $conn->real_escape_string($_POST['complaint_id']);
@@ -73,13 +76,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 <div class="navbar">
     &nbsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Welcome, <?= htmlspecialchars($employee_name) ?> (User)
 </div>
-
 <div class="sidebar">
     <a href="complaint.php">Register Complaint</a>
     <a href="?section=status">View Status</a>
+    <a href="?section=inbox">Inbox</a>
     <a href="?section=profile">Profile</a>
     <a href="?section=logout">logout</a>
-</div>
+</div> 
 
 <div class="content">
 <?php
@@ -98,9 +101,36 @@ if ($section == 'status') {
             </tr>
         <?php } ?>
     </table>
-
 <?php
-} elseif ($section == 'profile') {
+} elseif($section == 'inbox') {
+    ?>
+    <h2>Rejected Reports</h2>
+    <table>
+        <tr><th>ID</th><th>Employee ID</th><th>Type</th><th>Description</th><th>Status</th><th>Date</th><th>Action</th></tr>
+        <?php
+        $sql_inbox = "SELECT * FROM complaint WHERE employee_id = '$employee_id' AND senior_officer = '$employee_id' ORDER BY date DESC";
+        $res_inbox = $conn->query($sql_inbox);
+
+        while($row = $res_inbox->fetch_assoc()) {
+        ?>
+            <tr>
+                <td><?= $row['complaint_id'] ?></td>
+                <td><?= $row['employee_id'] ?></td>
+                <td><?= $row['type'] ?></td>
+                <td><?= htmlspecialchars(substr($row['description'], 0, 30)) ?>...</td>
+                <td><?= $row['status'] ?></td>
+                <td><?= $row['date'] ?></td>
+                <td> 
+                    <form method="POST" action="senior_view_complaint.php" style="display:inline;">
+                        <input type="hidden" name="complaint_id" value="<?= $row['complaint_id'] ?>">
+                        <button type="submit" class="btn">View</button>
+                    </form>
+                </td>
+            </tr>
+        <?php } ?>
+    </table>
+<?php 
+}elseif ($section == 'profile') {
 ?>
     <h2>My Profile</h2>
     <table>

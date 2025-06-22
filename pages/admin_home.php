@@ -12,14 +12,23 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$sql_user = "SELECT employee_name FROM users WHERE employee_id = '$employee_id'";
-$res_user = $conn->query($sql_user);
-$employee_name = "";
-if ($res_user && $res_user->num_rows > 0) {
-    $employee_name = $res_user->fetch_assoc()['employee_name'];
+if (isset($_GET['section']) && $_GET['section'] === 'logout') {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit();
 }
 
-$sql_all_complaints = "SELECT * FROM complaint ORDER BY date DESC";
+$sql_user = "SELECT employee_id, employee_name, dept, section, designation FROM users WHERE employee_id = '$employee_id'";
+$res_user = $conn->query($sql_user);
+$employee_data = null;
+$employee_name = "";
+if ($res_user && $res_user->num_rows > 0) {
+    $employee_data = $res_user->fetch_assoc();
+    $employee_name = $employee_data['employee_name'];
+}
+
+$sql_all_complaints = "SELECT * FROM complaint WHERE senior_officer = '$employee_id' ORDER BY date DESC";
 $res_all = $conn->query($sql_all_complaints);
 
 $sql_my_complaints = "SELECT * FROM complaint WHERE employee_id = '$employee_id' ORDER BY date DESC";
@@ -39,9 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
     header("Location: admin_home.php");
     exit();
 }
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,34 +75,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 </div>
 
 <div class="sidebar">
-    <a href="?section=status">View Status</a>
     <a href="?section=reports">Reports</a>
     <a href="?section=profile">Profile</a>
     <a href="?section=logout">Logout</a>
 </div>
 
 <div class="content">
-
 <?php
-$section = isset($_GET['section']) ? $_GET['section'] : 'status';
+$section = isset($_GET['section']) ? $_GET['section'] : 'reports';
 
-if ($section == 'status') {
-?>
-    <h2>My Registered Complaints</h2>
-    <table> 
-        <tr><th>Type</th><th>Description</th><th>Status</th><th>Date</th></tr>
-        <?php while($row = $res_my->fetch_assoc()) { ?>
-            <tr>
-                <td><?= htmlspecialchars($row['type']) ?></td>
-                <td><?= htmlspecialchars($row['description']) ?></td>
-                <td><?= htmlspecialchars($row['status']) ?></td>
-                <td><?= htmlspecialchars($row['date']) ?></td>
-            </tr>
-        <?php } ?>
-    </table>
-
-<?php
-} elseif ($section == 'reports') {
+if ($section == 'reports') {
 ?>
     <h2>All Complaints (Reports)</h2>
     <table>
@@ -117,6 +106,20 @@ if ($section == 'status') {
             </tr>
         <?php } ?>
     </table>
+
+<?php
+} elseif ($section == 'profile') {
+?>
+    <h2>My Profile</h2>
+    <table>
+        <tr><th>Employee ID</th><td><?= htmlspecialchars($employee_data['employee_id']) ?></td></tr>
+        <tr><th>Name</th><td><?= htmlspecialchars($employee_data['employee_name']) ?></td></tr>
+        <tr><th>Department</th><td><?= htmlspecialchars($employee_data['dept']) ?></td></tr>
+        <tr><th>Section</th><td><?= htmlspecialchars($employee_data['section']) ?></td></tr>
+        <tr><th>Designation</th><td><?= htmlspecialchars($employee_data['designation']) ?></td></tr>
+    </table>
+    <br>
+    <a href="change_password.php"><button class="btn">Change Password</button></a>
 <?php } ?>
 </div>
 </body>

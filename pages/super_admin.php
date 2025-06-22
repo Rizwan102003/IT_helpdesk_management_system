@@ -53,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Senior Officer Home - IT Centre</title>
+    <title>Senior Admin Home - IT Centre</title>
     <style>
         body {font-family: Arial; margin:0; padding:0; background: #f4f4f4;}
         .navbar {background:#007bff; color:white; padding:15px; font-size:22px;}
@@ -71,38 +71,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 
 <div class="navbar">
     &nbsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
-    Welcome, <?= htmlspecialchars($employee_name) ?> (Senior Officer)
+    Welcome, <?= htmlspecialchars($employee_name) ?> (Senior Admin)
 </div>
 
 <div class="sidebar">
-    <a href="complaint.php">Register Complaint</a>
-    <a href="?section=status">My Complaints</a>
-    <a href="?section=reports">Employee Complaint Reports</a>
+    <a href="?section=reports">Reports</a>
     <a href="?section=profile">Profile</a>
     <a href="?section=logout">Logout</a>
 </div>
 
 <div class="content">
 <?php
-$section = isset($_GET['section']) ? $_GET['section'] : 'status';
+$section = isset($_GET['section']) ? $_GET['section'] : 'reports';
 
-if ($section == 'status') {
-?>
-    <h2>My Registered Complaints</h2>
-    <table> 
-        <tr><th>Type</th><th>Description</th><th>Status</th><th>Date</th></tr>
-        <?php while($row = $res_my->fetch_assoc()) { ?>
-            <tr>
-                <td><?= htmlspecialchars($row['type']) ?></td>
-                <td><?= htmlspecialchars($row['description']) ?></td>
-                <td><?= htmlspecialchars($row['status']) ?></td>
-                <td><?= htmlspecialchars($row['date']) ?></td>
-            </tr>
-        <?php } ?>
-    </table>
-
-<?php
-} elseif ($section == 'reports') {
+if ($section == 'reports') {
 ?>
     <h2>All Complaints (Reports)</h2>
     <table>
@@ -124,7 +106,6 @@ if ($section == 'status') {
             </tr>
         <?php } ?>
     </table>
-
 <?php
 } elseif ($section == 'profile') {
 ?>

@@ -20,9 +20,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($row = $result->fetch_assoc()) {
         if (password_verify($password, $row['password'])) {
             $_SESSION["employee_id"] = $employee_id;
-            if ($row["level"] === "L1") {
+            if ($row["employee_id"] === "999999") {
+                header("Location: /helpdesk/pages/super_admin.php");
+            } elseif ($row["level"] === "L1") {
                 header("Location: /helpdesk/pages/admin_home.php");
-            } elseif ($row["level"] === "L2") {
+            }elseif ($row["level"] === "L2") {
                 header("Location: /helpdesk/pages/senior_home.php");
             } else {
                 header("Location: /helpdesk/pages/employee_home.php");
@@ -36,7 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>

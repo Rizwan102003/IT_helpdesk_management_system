@@ -11,12 +11,14 @@ $generatedPassword = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employee_id = trim($_POST["employee_id"]);
     $employee_name = trim($_POST["employee_name"]);
-
     $dept =$_POST["dept"];
     $section =$_POST["section"];
     $designation = $_POST["designation"];
-
-    if($designation=="afa"){
+    
+    if($employee_id == "999999") {
+        $level="L0";
+    }
+    elseif($designation=="afa"){
         $level="L2";
     }
     elseif($designation== "se/it"){

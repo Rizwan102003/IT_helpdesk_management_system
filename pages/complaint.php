@@ -24,6 +24,10 @@ $level = "";
 if ($level_result && $level_result->num_rows > 0) {
     $level = $level_result->fetch_assoc()['level'];
 }
+$back_link="#";
+if ($level== " L3")
+  $back_link= "employee_home.php";
+else $back_link= "senior_home.php";
 
 $senior_officers = [];
 $sql_seniors = "SELECT employee_id, employee_name FROM users WHERE level = 'L2'";
@@ -212,6 +216,19 @@ $result = $conn->query($sql);
     font-weight: bold;
     color: green;
   }
+  .back-button {
+  margin-top: 10px;
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 16px;
+}
+.back-button:hover {
+  background-color: #0056b3;
+}
 </style>
 </head>
 <body>
@@ -273,11 +290,11 @@ $result = $conn->query($sql);
       </option>
       <?php endforeach; ?>
       </select>
-
       <?php } ?>
-
       <br>
       <button type="submit">Submit Complaint</button>
+    </form>
+    <a href="<?php echo $back_link;?>" class="back-button">Back</a>
     </form>
   </section>
 </div>
