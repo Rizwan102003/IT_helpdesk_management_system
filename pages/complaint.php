@@ -24,10 +24,8 @@ $level = "";
 if ($level_result && $level_result->num_rows > 0) {
     $level = $level_result->fetch_assoc()['level'];
 }
-$back_link="#";
-if ($level== " L3")
-  $back_link= "employee_home.php";
-else $back_link= "senior_home.php";
+
+$back_link = ($level === "L3") ? "employee_home.php" : "senior_home.php";
 
 $senior_officers = [];
 $sql_seniors = "SELECT employee_id, employee_name FROM users WHERE level = 'L2'";
@@ -40,62 +38,92 @@ if ($res_seniors && $res_seniors->num_rows > 0) {
 
 $message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $type = $conn->real_escape_string($_POST['type']);
-    $description = $conn->real_escape_string($_POST['description']);
-    if ($level === "L3") {
-    $senior_officer = $conn->real_escape_string($_POST['senior_officer']);
-    } else {
-    $senior_officer = '999999';
-    }
 
-    $sql_user_details = "SELECT designation, dept, section FROM users WHERE employee_id = '$employee_id'";
-    $res_user_details = $conn->query($sql_user_details);
+    $conn->begin_transaction();
 
-    $designation = $department = $section = "";
-
-    $sql_designation = "SELECT designation FROM users WHERE employee_id = '$employee_id'";
-    $res_designation = $conn->query($sql_designation);
-    if ($res_user_details && $res_user_details->num_rows > 0) {
-        $row = $res_user_details->fetch_assoc();
-        $designation = $row['designation'];
-        $department = $row['dept'];
-        $section = $row['section'];
-    }
-
-    $sql_serial = "SELECT COUNT(*) as total FROM complaint";
-    $res_serial = $conn->query($sql_serial);
-    $serial_number = 1;
-    if ($res_serial && $res_serial->num_rows > 0) {
-        $serial_number = $res_serial->fetch_assoc()['total'] + 1;
-    }
-
-    $complaint_id = strtoupper(substr($department, 0, 2) . substr($section, 0, 2) . substr($designation, 0, 2) . str_pad($serial_number, 4, '0', STR_PAD_LEFT));
-
-    $file_name = "";
-    if (isset($_FILES['fileToUpload']) && $_FILES['fileToUpload']['error'] == 0) {
-        $target_dir = "uploads/";
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0755, true);
-        }
-        $original_name = basename($_FILES["fileToUpload"]["name"]);
-        $file_ext = pathinfo($original_name, PATHINFO_EXTENSION);
-        $unique_name = uniqid() . "." . $file_ext;
-        $target_file = $target_dir . $unique_name;
-
-        if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-            $file_name = $unique_name;
+    try {
+        $type = $conn->real_escape_string($_POST['type']);
+        $description = $conn->real_escape_string($_POST['description']);
+        if ($level === "L3") {
+            $senior_officer = $conn->real_escape_string($_POST['senior_officer']);
         } else {
-            $message = "Error uploading file.";
+            $senior_officer = '999999';
         }
-    }
 
-    $sql = "INSERT INTO complaint (complaint_id, employee_id, type, description, designation, senior_officer, file_name, status, date)
-            VALUES ('$complaint_id', '$employee_id', '$type', '$description', '$designation', '$senior_officer', '$file_name', 'Pending', NOW())";
+        $sql_user_details = "SELECT designation, dept, section FROM users WHERE employee_id = '$employee_id'";
+        $res_user_details = $conn->query($sql_user_details);
 
-    if ($conn->query($sql) === TRUE) {
+        $designation = $department = $section = "";
+
+        if ($res_user_details && $res_user_details->num_rows > 0) {
+            $row = $res_user_details->fetch_assoc();
+            $designation = $row['designation'];
+            $department = $row['dept'];
+            $section = $row['section'];
+        }
+
+        $sql_serial = "SELECT COUNT(*) as total FROM complaint";
+        $res_serial = $conn->query($sql_serial);
+        $serial_number = 1;
+        if ($res_serial && $res_serial->num_rows > 0) {
+            $serial_number = $res_serial->fetch_assoc()['total'] + 1;
+        }
+
+        $complaint_id = strtoupper(substr($department, 0, 2) . substr($section, 0, 2) . substr($designation, 0, 2) . str_pad($serial_number, 4, '0', STR_PAD_LEFT));
+
+        $file_name = "";
+        if (isset($_FILES['fileToUpload']) && $_FILES['fileToUpload']['error'] == 0) {
+            $target_dir = "uploads/";
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0755, true);
+            }
+            $original_name = basename($_FILES["fileToUpload"]["name"]);
+            $file_ext = pathinfo($original_name, PATHINFO_EXTENSION);
+            $unique_name = uniqid() . "." . $file_ext;
+            $target_file = $target_dir . $unique_name;
+
+            if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+                $file_name = $unique_name;
+            } else {
+                throw new Exception("Error uploading file.");
+            }
+        }
+
+        $sql = "INSERT INTO complaint (complaint_id, employee_id, type, description, designation, senior_officer, file_name, status, date)
+                VALUES ('$complaint_id', '$employee_id', '$type', '$description', '$designation', '$senior_officer', '$file_name', 'Pending', NOW())";
+
+        if (!$conn->query($sql)) {
+            throw new Exception("Error inserting into complaint table: " . $conn->error);
+        }
+
+        $designation_from = $designation;
+        $sent_to = $senior_officer;
+        $designation_to = "";
+
+        if ($senior_officer !== '999999') {
+            $res_senior = $conn->query("SELECT designation FROM users WHERE employee_id = '$senior_officer'");
+            if ($res_senior && $res_senior->num_rows > 0) {
+                $designation_to = $res_senior->fetch_assoc()['designation'];
+            } else {
+                $designation_to = "Unknown";
+            }
+        } else {
+            $designation_to = "System";
+        }
+
+        $sql_movement = "INSERT INTO movement (complaint_id, sent_from, designation_from, sent_to, designation_to, status, timestamp)
+                         VALUES ('$complaint_id', '$employee_id', '$designation_from', '$sent_to', '$designation_to', 'Pending', NOW())";
+
+        if (!$conn->query($sql_movement)) {
+            throw new Exception("Error inserting into movement table: " . $conn->error);
+        }
+
+        $conn->commit();
         $message = "Complaint submitted successfully. Your Complaint ID: $complaint_id";
-    } else {
-        $message = "Error: " . $conn->error;
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        $message = "Error: " . $e->getMessage();
     }
 }
 
@@ -294,8 +322,7 @@ $result = $conn->query($sql);
       <br>
       <button type="submit">Submit Complaint</button>
     </form>
-    <a href="<?php echo $back_link;?>" class="back-button">Back</a>
-    </form>
+    <a href="<?= htmlspecialchars($back_link) ?>" class="back-button">Back</a>
   </section>
 </div>
 </body>

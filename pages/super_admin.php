@@ -76,6 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 
 <div class="sidebar">
     <a href="?section=reports">Reports</a>
+    <a href="?section=movements">Movement Registry</a>
     <a href="?section=profile">Profile</a>
     <a href="?section=logout">Logout</a>
 </div>
@@ -106,7 +107,37 @@ if ($section == 'reports') {
             </tr>
         <?php } ?>
     </table>
+
 <?php
+} elseif ($section == 'movements') {
+    echo "<h2>Movement Registry</h2>";
+
+    $sql_movements = "SELECT * FROM movement ORDER BY timestamp DESC";
+    $res_movements = $conn->query($sql_movements);
+
+    if ($res_movements && $res_movements->num_rows > 0) {
+        echo "<table>
+                <tr>
+                    <th>ID</th>
+                    <th>Complaint ID</th>
+                    <th>Employee ID</th>
+                    <th>Remarks</th>
+                    <th>Timestamp</th>
+                </tr>";
+        while ($row = $res_movements->fetch_assoc()) {
+            echo "<tr>
+                    <td>{$row['id']}</td>
+                    <td>{$row['complaint_id']}</td>
+                    <td>{$row['sent_from']}</td>
+                    <td>" . htmlspecialchars($row['remark']) . "</td>
+                    <td>{$row['timestamp']}</td>
+                </tr>";
+        }
+        echo "</table>";
+    } else {
+        echo "<p>No movement records found.</p>";
+    }
+
 } elseif ($section == 'profile') {
 ?>
     <h2>My Profile</h2>
