@@ -104,7 +104,7 @@ if ($section == 'status') {
 <?php
 } elseif($section == 'inbox') {
     ?>
-    <h2>Rejected Reports</h2>
+    <h2>Returned Reports</h2>
     <table>
         <tr><th>ID</th><th>Employee ID</th><th>Type</th><th>Description</th><th>Status</th><th>Date</th><th>Action</th></tr>
         <?php

@@ -121,6 +121,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn->commit();
         $message = "Complaint submitted successfully. Your Complaint ID: $complaint_id";
 
+        if ($senior_officer !== '999999') {
+    $sql_email = "SELECT email, employee_name FROM users WHERE employee_id = '$senior_officer'";
+    $res_email = $conn->query($sql_email);
+    if ($res_email && $res_email->num_rows > 0) {
+        $email_data = $res_email->fetch_assoc();
+        $senior_email = $email_data['email'];
+        $senior_name = $email_data['employee_name'];
+
+        $subject = "New Complaint Assigned: $complaint_id";
+        $email_message = "Dear $senior_name,\n\nA new complaint has been assigned to you.\nComplaint ID: $complaint_id\nType: $type\nDescription: $description\n\nPlease log in to the Helpdesk portal to take necessary action.\n\nRegards,\nHelpdesk System";
+        $headers = "From: helpdesk@example.com";
+
+        if (mail($senior_email, $subject, $email_message, $headers)) {
+            $message .= " Email notification sent to senior officer.";
+        } else {
+            $message .= " Email could not be sent.";
+        }
+    }
+}
+
     } catch (Exception $e) {
         $conn->rollback();
         $message = "Error: " . $e->getMessage();

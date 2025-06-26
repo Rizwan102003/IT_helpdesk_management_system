@@ -76,7 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_complaint'])) {
 
 <div class="sidebar">
     <a href="?section=reports">Reports</a>
-    <a href="?section=movements">Movement Registry</a>
+    <a href="?section=movements">Movement Register</a>
     <a href="?section=profile">Profile</a>
     <a href="?section=logout">Logout</a>
 </div>

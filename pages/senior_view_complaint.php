@@ -16,8 +16,8 @@ $level = $data['level'] ?? '';
 $designation = $data['designation'] ?? '';
 
 $back_link = match($level) {
-    'L0' => 'admin_home.php',
-    'L1' => 'junior_admin_home.php',
+    'L0' => 'super_admin.php',
+    'L1' => 'admin_home.php',
     'L2' => 'senior_home.php',
     'L3' => 'employee_home.php',
     default => '#'
@@ -44,7 +44,6 @@ if ($level === 'L3') {
 $message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $complaint_id = $conn->real_escape_string($_POST['complaint_id']);
-
     if (isset($_POST['add_remark'])) {
         $remark = $conn->real_escape_string($_POST['remark']);
 
@@ -57,12 +56,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $message = ($conn->query($sql)) ? "Remark submitted successfully." : "Error submitting remark: " . $conn->error;
     }
-
     if ($level === 'L2' && isset($_POST['forward'])) {
         $sql = "UPDATE complaint SET senior_officer='999999' WHERE complaint_id='$complaint_id'";
         $message = $conn->query($sql) ? "Forwarded to admin." : "Error: " . $conn->error;
     }
-
     if (($level === 'L2' || $level === 'L1') && isset($_POST['reject'])) {
         $res = $conn->query("SELECT employee_id FROM complaint WHERE complaint_id='$complaint_id'");
         if ($res && $res->num_rows > 0) {
@@ -71,19 +68,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $message = $conn->query($sql) ? "Complaint rejected back to employee." : "Error: " . $conn->error;
         }
     }
-
     if ($level === 'L0' && isset($_POST['assign_junior'])) {
         $junior_id = $conn->real_escape_string($_POST['junior_officer']);
         $sql = "UPDATE complaint SET senior_officer='$junior_id' WHERE complaint_id='$complaint_id'";
         $message = $conn->query($sql) ? "Assigned to junior admin." : "Error: " . $conn->error;
     }
-
     if ($level === 'L1' && isset($_POST['update_status_l1'])) {
         $status = $conn->real_escape_string($_POST['status']);
         $sql = "UPDATE complaint SET status='$status' WHERE complaint_id='$complaint_id'";
         $message = $conn->query($sql) ? "Status updated." : "Error: " . $conn->error;
     }
-
     if ($level === 'L3' && isset($_POST['resend'])) {
         $description = $conn->real_escape_string($_POST['description']);
         $senior_id = $conn->real_escape_string($_POST['senior_officer']);
@@ -91,6 +85,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = $conn->query($sql) ? "Resent to senior officer." : "Error: " . $conn->error;
     }
 }
+
+$super_admin_remark = $senior_officer_remark = $junior_admin_remark = "";
+
+$remark_query = "SELECT remark, designation_from, sent_from FROM movement WHERE complaint_id='$cid' AND remark IS NOT NULL ORDER BY timestamp DESC";
+$remark_result = $conn->query($remark_query);
+if ($remark_result && $remark_result->num_rows > 0) {
+    while ($row = $remark_result->fetch_assoc()) {
+        if ($row['sent_from'] == '999999' && !$super_admin_remark) {
+            $super_admin_remark = $row['remark'];
+        } elseif ($row['designation_from'] == 'afa' && !$senior_officer_remark) {
+            $senior_officer_remark = $row['remark'];
+        } elseif ($row['designation_from'] == 'se/it' && !$junior_admin_remark) {
+            $junior_admin_remark = $row['remark'];
+        }
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -126,11 +137,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 <div class="container">
     <h2>Complaint Details (ID: <?= htmlspecialchars($complaint['complaint_id']) ?>)</h2>
-
     <?php if ($message): ?>
         <div class="message"><?= htmlspecialchars($message) ?></div>
     <?php endif; ?>
-
     <form method="POST" action="">
         <input type="hidden" name="complaint_id" value="<?= htmlspecialchars($complaint['complaint_id']) ?>">
 
@@ -152,6 +161,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="Closed" <?= $complaint['status']=='Closed' ? 'selected':'' ?>>Closed</option>
             </select>
 
+            <label>Enter Remark:</label>
+            <textarea name="remark" placeholder="Write your remark here..."></textarea>
+
             <label>Assign to Junior Admin:</label>
             <select name="junior_officer" required>
                 <option value="">-- Select Junior Admin --</option>
@@ -163,22 +175,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <?php elseif ($level === 'L1' || $level === 'L2'): ?>
             <label>Enter Remark:</label>
-            <textarea name="remark" placeholder="Write your remark here..." required></textarea>
+            <textarea name="remark" placeholder="Write your remark here..."></textarea>
             <button type="submit" name="add_remark" class="btn">Submit Remark</button>
             <?php if ($level === 'L2'): ?>
                 <button type="submit" name="forward" class="btn">Forward to Admin</button>
             <?php endif; ?>
-            <button type="submit" name="reject" class="btn btn-danger">Reject Complaint</button>
+            <button type="submit" name="reject" class="btn btn-danger">Return Complaint</button>
 
         <?php elseif ($level === 'L3'): ?>
-            <label>Forward to Senior Officer</label>
-            <select name="senior_officer" required>
-                <option value="">-- Select Senior Officer --</option>
-                <?php foreach ($senior_officers as $officer): ?>
-                    <option value="<?= $officer['employee_id'] ?>"><?= $officer['employee_name'] ?> (<?= $officer['employee_id'] ?>)</option>
-                <?php endforeach; ?>
-            </select>
-            <button type="submit" name="resend" class="btn">Resend Complaint</button>
+    <label>Remark (Super Admin):</label>
+    <textarea readonly><?= htmlspecialchars($super_admin_remark) ?></textarea>
+
+    <label>Remark (Senior Officer):</label>
+    <textarea readonly><?= htmlspecialchars($senior_officer_remark) ?></textarea>
+
+    <label>Remark (Junior Admin):</label>
+    <textarea readonly><?= htmlspecialchars($junior_admin_remark) ?></textarea>
+
+    <label>Forward to Senior Officer</label>
+    <select name="senior_officer" required>
+        <option value="">-- Select Senior Officer --</option>
+        <?php foreach ($senior_officers as $officer): ?>
+            <option value="<?= $officer['employee_id'] ?>"><?= $officer['employee_name'] ?> (<?= $officer['employee_id'] ?>)</option>
+        <?php endforeach; ?>
+    </select>
+    <button type="submit" name="resend" class="btn">Resend to Senior Officer</button>
+
         <?php endif; ?>
     </form>
     <a href="<?= htmlspecialchars($back_link) ?>" class="back-link">Back</a>
