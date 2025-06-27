@@ -19,6 +19,14 @@ if (isset($_GET['section']) && $_GET['section'] === 'logout') {
     exit();
 }
 
+$sql_pending = "SELECT COUNT(*) AS total_pending FROM complaint WHERE status = 'Pending'";
+$res_pending = $conn->query($sql_pending);
+$total_pending = ($res_pending && $res_pending->num_rows > 0) ? $res_pending->fetch_assoc()['total_pending'] : 0;
+
+$sql_solved = "SELECT COUNT(*) AS total_solved FROM complaint WHERE status IN ('Resolved', 'Closed')";
+$res_solved = $conn->query($sql_solved);
+$total_solved = ($res_solved && $res_solved->num_rows > 0) ? $res_solved->fetch_assoc()['total_solved'] : 0;
+
 $sql_user = "SELECT employee_id, employee_name, dept, section, designation FROM users WHERE employee_id = '$employee_id'";
 $res_user = $conn->query($sql_user);
 $employee_data = null;
@@ -87,6 +95,13 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'reports';
 
 if ($section == 'reports') {
 ?>
+
+    <h2>Complaint Statistics</h2>
+    <ul style="list-style: none; padding-left: 0;">
+    <li><strong>Total Pending Complaints:</strong> <?= $total_pending ?></li>
+    <li><strong>Total Solved Complaints:</strong> <?= $total_solved ?></li>
+    </ul>
+
     <h2>All Complaints (Reports)</h2>
     <table>
         <tr><th>ID</th><th>Employee ID</th><th>Type</th><th>Description</th><th>Status</th><th>Date</th><th>Action</th></tr>

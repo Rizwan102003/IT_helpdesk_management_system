@@ -183,13 +183,11 @@ if ($remark_result && $remark_result->num_rows > 0) {
             <button type="submit" name="reject" class="btn btn-danger">Return Complaint</button>
 
         <?php elseif ($level === 'L3'): ?>
-    <label>Remark (Super Admin):</label>
-    <textarea readonly><?= htmlspecialchars($super_admin_remark) ?></textarea>
 
     <label>Remark (Senior Officer):</label>
     <textarea readonly><?= htmlspecialchars($senior_officer_remark) ?></textarea>
 
-    <label>Remark (Junior Admin):</label>
+    <label>Remark (Admin):</label>
     <textarea readonly><?= htmlspecialchars($junior_admin_remark) ?></textarea>
 
     <label>Forward to Senior Officer</label>
